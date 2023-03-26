@@ -3,11 +3,11 @@
 
 const INPUT_CHUNK_SIZE: usize = 4;
 
-pub type RecordId = u32;
+type RecordId = u32;
 
 #[repr(C)]
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub struct Record {
+struct Record {
     len: u32,
     payload: [u8; INPUT_CHUNK_SIZE],
 }
