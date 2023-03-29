@@ -3,8 +3,6 @@
 
 const INPUT_CHUNK_SIZE: usize = 4;
 
-type RecordId = u32;
-
 #[repr(C)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct Record {
@@ -31,11 +29,10 @@ unsafe fn transmute_to_bytes_copy(x: &Record) -> [u8; RECORD_SIZE] {
     bytes
 }
 
-unsafe fn transmute_from_bytes_copy<'a>(x: &'a [u8]) -> &'a Record {
+unsafe fn transmute_from_bytes_copy(x: &[u8]) -> &Record {
     unsafe { &*(x.as_ptr() as *const _) }
 }
 
-// A small prime number.
 const ROT: usize = 7;
 
 pub fn obfuscate_iter(bytes: &[u8]) -> impl Iterator<Item = u8> + '_ {
@@ -46,7 +43,6 @@ pub fn obfuscate_iter(bytes: &[u8]) -> impl Iterator<Item = u8> + '_ {
     let shuffled_chunks = chunks.cycle().skip(ROT).take(num_records);
 
     let divisble_parts = shuffled_chunks
-        .clone()
         .enumerate()
         .map(|(i, c)| Record::new(i as _, c))
         .flat_map(|r| unsafe { transmute_to_bytes_copy(&r) });
