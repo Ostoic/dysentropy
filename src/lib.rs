@@ -24,12 +24,20 @@ impl Record {
 
 const RECORD_SIZE: usize = core::mem::size_of::<Record>();
 
-unsafe fn transmute_to_bytes_copy(x: &Record) -> [u8; RECORD_SIZE] {
-    let bytes: [u8; RECORD_SIZE] = unsafe { core::mem::transmute_copy(x) };
-    bytes
+/// Transmutes a record into a series of bytes.
+#[inline]
+fn transmute_to_bytes_copy(x: &Record) -> [u8; RECORD_SIZE] {
+    unsafe { core::mem::transmute_copy(x) }
 }
 
+/// SAFETY: Since an arbitrary byte slice is not guaranteed to have the precise layout required for
+/// a `Record` type to be transmutable from, this must be unsafe.
+#[inline]
 unsafe fn transmute_from_bytes_copy(x: &[u8]) -> &Record {
+    if x.len() != core::mem::size_of::<Record>() {
+        panic!("Byte slice must be the same length as a Record")
+    }
+
     unsafe { &*(x.as_ptr() as *const _) }
 }
 
@@ -45,7 +53,7 @@ pub fn obfuscate_iter(bytes: &[u8]) -> impl Iterator<Item = u8> + '_ {
     let divisble_parts = shuffled_chunks
         .enumerate()
         .map(|(i, c)| Record::new(i as _, c))
-        .flat_map(|r| unsafe { transmute_to_bytes_copy(&r) });
+        .flat_map(|r| transmute_to_bytes_copy(&r));
 
     divisble_parts.chain(remainder.iter().copied())
 }
